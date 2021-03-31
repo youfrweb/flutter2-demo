@@ -2,16 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter2_demo/pages/myCustomForm.dart';
 import 'package:flutter2_demo/pages/myHomePage.dart';
-import 'package:flutter2_demo/pages/myInput.dart';
 import 'package:flutter2_demo/pages/stateLessWidgetDemo.dart';
 
 /// 路由配置
-
 final routes = {
   '/': (context, {arguments}) => MyHomePage(),
   '/form': (context, {arguments}) => MyCustomForm(arguments: arguments),
-  '/stateLessWidgetDemo': (context, {arguments}) => StateLessWidgetDemo(),
-  '/myInput': (context, {arguments}) => MyInput(),
+  '/stateLess': (context, {arguments}) => StateLessWidgetDemo(),
 };
 
 // 处理参数传递
@@ -21,13 +18,14 @@ Route<dynamic> onGenerateRoute (RouteSettings settings) {
   if (pageBuilder != null) {
     if (settings.arguments != null) {
       // 创建路由页面并携带参数
+      // settings: RouteSettings(name: settings.name) 设置浏览器的 url
       return MaterialPageRoute(
           builder: (context) =>
-              pageBuilder(context, arguments: settings.arguments));
+              pageBuilder(context, arguments: settings.arguments), settings: RouteSettings(name: settings.name));
     } else {
       return MaterialPageRoute(
-          builder: (context) => pageBuilder(context));
+          builder: (context) => pageBuilder(context), settings: RouteSettings(name: settings.name));
     }
   }
-  return MaterialPageRoute(builder: (context) => MyHomePage());
+  return MaterialPageRoute(builder: (context) => MyHomePage(), settings: RouteSettings(name: settings.name));
 }

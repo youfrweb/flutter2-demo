@@ -27,4 +27,22 @@ void main() {
     expect(find.text('0'), findsNothing);
     expect(find.text('1'), findsOneWidget);
   });
+
+  test('fan ing 定义',() {
+    Location l2 = Location<int>(10, 20);
+    print(l2.y); // int
+    print(l2.x.runtimeType); // int
+
+    Location l3 = Location<String>('aaa', 'bbb');
+    print(l3.x.runtimeType); // String
+  });
+}
+
+
+
+class Location<T> {
+  T x;
+  T y;
+
+  Location(this.x, this.y);
 }

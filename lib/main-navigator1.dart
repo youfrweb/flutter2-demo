@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter2_demo/pages/myCustomForm.dart';
 
 void main() {
   runApp(BooksApp());
@@ -26,7 +27,11 @@ class _BooksAppState extends State<BooksApp> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Books App',
+      // 定义特定于应用程序的行为，例如路由器如何了解应用程序状态的更改以及如何响应这些更改。
+      // 它的工作是侦听RouteInformationParser和应用程序状态，并使用当前的页面列表构建导航器
       routerDelegate: _routerDelegate,
+      // 路由信息解析器
+      // 它从RouteInformationProvider获取RouteInformation并将其解析为用户定义的数据类型。
       routeInformationParser: _routeInformationParser,
     );
   }
@@ -40,6 +45,11 @@ class BookRouteInformationParser extends RouteInformationParser<BookRoutePath> {
     // Handle '/'
     if (uri.pathSegments.length == 0) {
       return BookRoutePath.home();
+    }
+
+    print('------123---- ${uri.pathSegments}');
+    if(uri.pathSegments[0] == 'form'){
+      return BookRoutePath.form();
     }
 
     // Handle '/book/:id'
@@ -58,6 +68,8 @@ class BookRouteInformationParser extends RouteInformationParser<BookRoutePath> {
   @override
   RouteInformation restoreRouteInformation(BookRoutePath path) {
     if (path.isUnknown) {
+      /// 一条路由信息
+      /// [location] 等效于web 应用程序中的 url
       return RouteInformation(location: '/404');
     }
     if (path.isHomePage) {
@@ -65,6 +77,9 @@ class BookRouteInformationParser extends RouteInformationParser<BookRoutePath> {
     }
     if (path.isDetailsPage) {
       return RouteInformation(location: '/book/${path.id}');
+    }
+    if (path.isFormPage) {
+      return RouteInformation(location: '/form');
     }
     return null;
   }
@@ -75,6 +90,7 @@ class BookRouterDelegate extends RouterDelegate<BookRoutePath>
   final GlobalKey<NavigatorState> navigatorKey;
 
   Book _selectedBook;
+  bool _toForm = false;
   bool show404 = false;
 
   List<Book> books = [
@@ -110,6 +126,8 @@ class BookRouterDelegate extends RouterDelegate<BookRoutePath>
           MaterialPage(key: ValueKey('UnknownPage'), child: UnknownScreen())
         else if (_selectedBook != null)
           BookDetailsPage(book: _selectedBook)
+        else if (_toForm)
+          MaterialPage(key: ValueKey('MyCustomForm'), child: MyCustomForm())
       ],
       onPopPage: (route, result) {
         if (!route.didPop(result)) {
@@ -152,6 +170,13 @@ class BookRouterDelegate extends RouterDelegate<BookRoutePath>
     _selectedBook = book;
     notifyListeners();
   }
+
+  void _handlerFormTapped() {
+    _toForm = true;
+    notifyListeners();
+
+
+  }
 }
 
 class BookDetailsPage extends Page {
@@ -175,6 +200,10 @@ class BookRoutePath {
   final int id;
   final bool isUnknown;
 
+  BookRoutePath.form()
+      : id = null,
+        isUnknown = false;
+
   BookRoutePath.home()
       : id = null,
         isUnknown = false;
@@ -188,15 +217,19 @@ class BookRoutePath {
   bool get isHomePage => id == null;
 
   bool get isDetailsPage => id != null;
+
+  bool get isFormPage => id == null;
 }
 
 class BooksListScreen extends StatelessWidget {
   final List<Book> books;
   final ValueChanged<Book> onTapped;
+  final ValueChanged toForm;
 
   BooksListScreen({
     @required this.books,
     @required this.onTapped,
+    @required this.toForm,
   });
 
   @override
@@ -210,7 +243,8 @@ class BooksListScreen extends StatelessWidget {
               title: Text(book.title),
               subtitle: Text(book.author),
               onTap: () => onTapped(book),
-            )
+            ),
+          ElevatedButton(onPressed: () => toForm, child: Text('form'))
         ],
       ),
     );

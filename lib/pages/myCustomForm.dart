@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter2_demo/main-navigator.dart';
+import 'package:flutter2_demo/pages/myDio.dart';
 
 class MyCustomForm extends StatefulWidget {
   final arguments;
@@ -11,7 +13,9 @@ class MyCustomForm extends StatefulWidget {
 
 class MyCustomFormState extends State<MyCustomForm> {
   final _formKey = GlobalKey<FormState>();
-  String _title = '111';
+  String _title = '';
+
+  final ValueNotifier<bool> _eyeIconNotifier = ValueNotifier(true);
   @override
   void initState() {
     super.initState();
@@ -39,13 +43,23 @@ class MyCustomFormState extends State<MyCustomForm> {
 
   _goBack () {
     Navigator.pop(context);
+//    MyRouteDelegate.of(context).push('/');
+//      void _removeLast() {
+//    final delegate = MyRouteDelegate.of(context);
+//    final stack = delegate.stack;
+//    delegat e.remove(stack.last);
+//    if (stack.length >= 2) {
+//      delegate.remove(stack[stack.length - 1]);
+//    }
+//  }
   }
 
+  final List<Map> _formItem = [
+    {"key": "name", "cn": "用户名", "value": "", "icon": Icons.person},
+    {"key": "password", "cn": "密码", "value": "", "icon": Icons.lock},
+  ];
+
   Widget _formModal() {
-    final List<Map> _formItem = [
-      {"key": "name", "cn": "用户名", "value": "", "icon": Icons.person},
-      {"key": "password", "cn": "密码", "value": "", "icon": Icons.lock},
-    ];
     return Container(
       width: 400.0,
       child: Form(
@@ -57,43 +71,15 @@ class MyCustomFormState extends State<MyCustomForm> {
             Text("登录", style: TextStyle(fontSize: 20.0)),
             Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: _formItem
-                    .map((item) => Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: TextFormField(
-                            decoration: InputDecoration(
-                                labelText: '输入${item["cn"]}',
-                                icon: Icon(item["icon"]),
-                              fillColor: Colors.white,
-                              border: new OutlineInputBorder(
-                                borderRadius: new BorderRadius.circular(25.0),
-                                borderSide: new BorderSide(
-                                ),
-                              ),
-                            ),
-                            onSaved: (value) {
-                              item["value"] = value;
-                            },
-                            validator: (value) {
-                              /// 添加验证
-                              if (value.isEmpty) {
-                                return '请填写${item["cn"]}';
-                              }
-                              return null;
-                            },
-                          ),
-                    ))
-                    .toList(),
-              ),
+              child: _formList(),
             ),
             ElevatedButton(
               onPressed: () {
                 //如果表单有效，则Validate返回true，否则返回false。
                 if (_formKey.currentState.validate()) {
                   _formKey.currentState.save();
-                  print('用户名：${_formItem[0]["value"]}  密码： ${_formItem[1]["value"]}');
-//                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Processing Data')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('用户名：${_formItem[0]["value"]}  密码： ${_formItem[1]["value"]}')));
+                  _handleLogin(_formItem);
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -109,4 +95,63 @@ class MyCustomFormState extends State<MyCustomForm> {
       ),
     );
   }
+
+  _handleLogin (item) {
+    MyDio().postRequestFunction({
+      'name': item[0]["value"],
+      'password': item[1]["value"]
+    }).then((res) => {
+      print('login :$res')
+    }).catchError((e){
+      print('login :$e');
+    });
+  }
+
+
+  Widget _formList() {
+    return Column(
+      children: _formItem.map((item) => Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: ValueListenableBuilder(
+          valueListenable: _eyeIconNotifier,
+          builder: (context, value, _) {
+            return TextFormField(
+              obscureText: item["key"] == "name" ? false : value,
+              decoration: InputDecoration(
+                labelText: '输入${item["cn"]}',
+                prefixIcon: Icon(item["icon"]),
+                suffixIcon: _eyePassword(item["key"], value),
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25.0),
+                ),
+              ),
+              onSaved: (value) {
+                item["value"] = value;
+              },
+              validator: (value) {
+                /// 添加验证
+                if (value.isEmpty) {
+                  return '请填写${item["cn"]}';
+                }
+                return null;
+              },
+            );
+          }
+        ),
+      ))
+          .toList(),
+    );
+  }
+
+  Widget _eyePassword(key, value) {
+    return key == "name" ? SizedBox()
+        : GestureDetector(
+        onTap: (){
+          _eyeIconNotifier.value = !value;
+        },
+        child: Icon(value ? Icons.visibility : Icons.visibility_off));
+  }
+
+
 }
